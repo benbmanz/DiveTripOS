@@ -1272,12 +1272,10 @@ async function submitReasoning() {
   if (input) input.value = '';
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('hhttps://dive-trip-o-sproxy.vercel.app/api/claude', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
         model: 'claude-opus-4-7',
