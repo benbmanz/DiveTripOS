@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -400,441 +399,658 @@ function gearAddModal() {
       <div class="fg"><label class="fl">Last Service</label><input class="fi" id="m-service" placeholder="May 2026"></div>
     </div>
     <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes"></textarea></div>
-
-```
-<div class="mda">
-  <button class="btn bg2" onclick="closeModal()">Cancel</button>
-  <button class="btn bp" onclick="gearSaveNew()">Save</button>
-</div>`);
-```
-
+    <div class="mda">
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="gearSaveNew()">Save</button>
+    </div>`);
 }
 
 function gearSaveNew() {
-const name = document.getElementById(‘m-name’).value.trim();
-if (!name) return;
-STATE.gear.push({
-id: Date.now(), name,
-category: document.getElementById(‘m-cat’).value,
-serial: document.getElementById(‘m-serial’).value,
-dives: parseInt(document.getElementById(‘m-dives’).value)||0,
-lastService: document.getElementById(‘m-service’).value,
-notes: document.getElementById(‘m-notes’).value,
-});
-save(); closeModal(); toast(‘Item added’); renderGear();
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) return;
+  STATE.gear.push({
+    id: Date.now(), name,
+    category: document.getElementById('m-cat').value,
+    serial: document.getElementById('m-serial').value,
+    dives: parseInt(document.getElementById('m-dives').value)||0,
+    lastService: document.getElementById('m-service').value,
+    notes: document.getElementById('m-notes').value,
+  });
+  save(); closeModal(); toast('Item added'); renderGear();
 }
 
 function gearEditModal(id) {
-const item = STATE.gear.find(g => g.id === id);
-if (!item) return;
-showModal(` <div class="mdtitle">Edit Gear</div> <div class="fr"> <div class="fg" style="flex:2"><label class="fl">Name</label><input class="fi" id="m-name" value="${item.name}"></div> <div class="fg"><label class="fl">Category</label><select class="fi" id="m-cat">${GCATS.filter(c=>c!=='All').map(c=>`<option ${c===item.category?‘selected’:’’}>${c}</option>`).join('')}</select></div> </div> <div class="fr"> <div class="fg"><label class="fl">Serial / ID</label><input class="fi" id="m-serial" value="${item.serial||''}"></div> <div class="fg"><label class="fl">Dives</label><input class="fi" id="m-dives" type="number" value="${item.dives||0}"></div> <div class="fg"><label class="fl">Last Service</label><input class="fi" id="m-service" value="${item.lastService||''}"></div> </div> <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes">${item.notes||''}</textarea></div> <div class="mda"> <button class="btn bdn bsm" onclick="gearDelete(${id})">Delete</button> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="gearSaveEdit(${id})">Save</button> </div>`);
+  const item = STATE.gear.find(g => g.id === id);
+  if (!item) return;
+  showModal(`
+    <div class="mdtitle">Edit Gear</div>
+    <div class="fr">
+      <div class="fg" style="flex:2"><label class="fl">Name</label><input class="fi" id="m-name" value="${item.name}"></div>
+      <div class="fg"><label class="fl">Category</label><select class="fi" id="m-cat">${GCATS.filter(c=>c!=='All').map(c=>`<option ${c===item.category?'selected':''}>${c}</option>`).join('')}</select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Serial / ID</label><input class="fi" id="m-serial" value="${item.serial||''}"></div>
+      <div class="fg"><label class="fl">Dives</label><input class="fi" id="m-dives" type="number" value="${item.dives||0}"></div>
+      <div class="fg"><label class="fl">Last Service</label><input class="fi" id="m-service" value="${item.lastService||''}"></div>
+    </div>
+    <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes">${item.notes||''}</textarea></div>
+    <div class="mda">
+      <button class="btn bdn bsm" onclick="gearDelete(${id})">Delete</button>
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="gearSaveEdit(${id})">Save</button>
+    </div>`);
 }
 
 function gearSaveEdit(id) {
-const item = STATE.gear.find(g => g.id === id);
-if (!item) return;
-item.name = document.getElementById(‘m-name’).value;
-item.category = document.getElementById(‘m-cat’).value;
-item.serial = document.getElementById(‘m-serial’).value;
-item.dives = parseInt(document.getElementById(‘m-dives’).value)||0;
-item.lastService = document.getElementById(‘m-service’).value;
-item.notes = document.getElementById(‘m-notes’).value;
-save(); closeModal(); toast(‘Updated’); renderGear();
+  const item = STATE.gear.find(g => g.id === id);
+  if (!item) return;
+  item.name = document.getElementById('m-name').value;
+  item.category = document.getElementById('m-cat').value;
+  item.serial = document.getElementById('m-serial').value;
+  item.dives = parseInt(document.getElementById('m-dives').value)||0;
+  item.lastService = document.getElementById('m-service').value;
+  item.notes = document.getElementById('m-notes').value;
+  save(); closeModal(); toast('Updated'); renderGear();
 }
 
 function gearDelete(id) {
-STATE.gear = STATE.gear.filter(g => g.id !== id);
-save(); closeModal(); toast(‘Removed’); renderGear();
+  STATE.gear = STATE.gear.filter(g => g.id !== id);
+  save(); closeModal(); toast('Removed'); renderGear();
 }
 
 // ============================================================
 // ITINERARY
 // ============================================================
-const URG = {‘Sipadan / Mabul’:‘urgent’,‘Komodo’:‘warn’};
+const URG = {'Sipadan / Mabul':'urgent','Komodo':'warn'};
 let expandedSeg = null;
 
 function renderItinerary() {
-const el = document.getElementById(‘tab-itinerary’);
-const totalDays = STATE.segments.reduce((s,seg) => s+(+seg.days||0), 0);
-const totalBudget = STATE.segments.reduce((s,seg) => s+(+seg.budgetUSD||0), 0);
-el.innerHTML = `<div class="srow"> <div class="sbox"><div class="slbl">Segments</div><div class="sval">${STATE.segments.length}</div></div> <div class="sbox"><div class="slbl">Total Days</div><div class="sval">${totalDays}<span class="sunit">d</span></div></div> <div class="sbox"><div class="slbl">Budget</div><div class="sval">$${totalBudget.toLocaleString()}</div></div> </div> <div class="shdr"><div class="ptitle" style="margin:0">Route — v2.1</div><button class="btn bp bsm" onclick="segAddModal()">+ Add</button></div> ${STATE.segments.map((seg,i) => { const urg = URG[seg.name]; const isExp = expandedSeg === seg.id; return`<div class="card" style="cursor:pointer" onclick="toggleSeg(${seg.id})">
-<div style="display:flex;justify-content:space-between;align-items:flex-start">
-<div>
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap">
-<span style="font-size:10px;color:var(--txd)">${String(i+1).padStart(2,‘0’)}</span>
-<span class="ctitle">${seg.name}</span>
-${urg===‘urgent’?’<span class="badge br">⚑ Urgent</span>’:’’}
-${urg===‘warn’?’<span class="badge ba">⚑ Monitor</span>’:’’}
-</div>
-<div class="csub">${seg.location} · ${seg.start}→${seg.end} · ${seg.days}d</div>
-</div>
-<div style="text-align:right;flex-shrink:0;margin-left:8px">
-<div style="font-size:15px;font-weight:600;color:var(--tb)">$${(+seg.budgetUSD||0).toLocaleString()}</div>
-<div style="font-size:9px;color:var(--txd)">$${Math.round(seg.budgetUSD/(seg.days||1))}/day</div>
-</div>
-</div>
-${isExp ? `<div style="border-top:1px solid var(--bd);padding-top:10px;margin-top:8px"> <p class="nt">${seg.notes||'No notes.'}</p> <div style="margin-top:10px;display:flex;justify-content:flex-end"> <button class="btn bg2 bsm" onclick="event.stopPropagation();segEditModal(${seg.id})">Edit</button> </div> </div>` : ‘’}
-</div>`; }).join('')}`;
+  const el = document.getElementById('tab-itinerary');
+  const totalDays = STATE.segments.reduce((s,seg) => s+(+seg.days||0), 0);
+  const totalBudget = STATE.segments.reduce((s,seg) => s+(+seg.budgetUSD||0), 0);
+  el.innerHTML = `
+    <div class="srow">
+      <div class="sbox"><div class="slbl">Segments</div><div class="sval">${STATE.segments.length}</div></div>
+      <div class="sbox"><div class="slbl">Total Days</div><div class="sval">${totalDays}<span class="sunit">d</span></div></div>
+      <div class="sbox"><div class="slbl">Budget</div><div class="sval">$${totalBudget.toLocaleString()}</div></div>
+    </div>
+    <div class="shdr"><div class="ptitle" style="margin:0">Route — v2.1</div><button class="btn bp bsm" onclick="segAddModal()">+ Add</button></div>
+    ${STATE.segments.map((seg,i) => {
+      const urg = URG[seg.name];
+      const isExp = expandedSeg === seg.id;
+      return `<div class="card" style="cursor:pointer" onclick="toggleSeg(${seg.id})">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap">
+              <span style="font-size:10px;color:var(--txd)">${String(i+1).padStart(2,'0')}</span>
+              <span class="ctitle">${seg.name}</span>
+              ${urg==='urgent'?'<span class="badge br">⚑ Urgent</span>':''}
+              ${urg==='warn'?'<span class="badge ba">⚑ Monitor</span>':''}
+            </div>
+            <div class="csub">${seg.location} · ${seg.start}→${seg.end} · ${seg.days}d</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:8px">
+            <div style="font-size:15px;font-weight:600;color:var(--tb)">$${(+seg.budgetUSD||0).toLocaleString()}</div>
+            <div style="font-size:9px;color:var(--txd)">$${Math.round(seg.budgetUSD/(seg.days||1))}/day</div>
+          </div>
+        </div>
+        ${isExp ? `<div style="border-top:1px solid var(--bd);padding-top:10px;margin-top:8px">
+          <p class="nt">${seg.notes||'No notes.'}</p>
+          <div style="margin-top:10px;display:flex;justify-content:flex-end">
+            <button class="btn bg2 bsm" onclick="event.stopPropagation();segEditModal(${seg.id})">Edit</button>
+          </div>
+        </div>` : ''}
+      </div>`;
+    }).join('')}`;
 }
 
 function toggleSeg(id) { expandedSeg = expandedSeg === id ? null : id; renderItinerary(); }
 
 function segAddModal() {
-showModal(` <div class="mdtitle">Add Segment</div> <div class="fg" style="margin-bottom:10px"><label class="fl">Name</label><input class="fi" id="m-name" placeholder="Koh Tao — Block 1"></div> <div class="fg" style="margin-bottom:10px"><label class="fl">Location</label><input class="fi" id="m-loc"></div> <div class="fr"> <div class="fg"><label class="fl">Start</label><input class="fi" id="m-start" placeholder="2026-06"></div> <div class="fg"><label class="fl">End</label><input class="fi" id="m-end" placeholder="2026-09"></div> <div class="fg"><label class="fl">Days</label><input class="fi" id="m-days" type="number"></div> <div class="fg"><label class="fl">Budget USD</label><input class="fi" id="m-budget" type="number"></div> </div> <div class="fg"><label class="fl">Notes / Flags</label><textarea class="fta" id="m-notes"></textarea></div> <div class="mda"> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="segSaveNew()">Save</button> </div>`);
+  showModal(`
+    <div class="mdtitle">Add Segment</div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Name</label><input class="fi" id="m-name" placeholder="Koh Tao — Block 1"></div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Location</label><input class="fi" id="m-loc"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Start</label><input class="fi" id="m-start" placeholder="2026-06"></div>
+      <div class="fg"><label class="fl">End</label><input class="fi" id="m-end" placeholder="2026-09"></div>
+      <div class="fg"><label class="fl">Days</label><input class="fi" id="m-days" type="number"></div>
+      <div class="fg"><label class="fl">Budget USD</label><input class="fi" id="m-budget" type="number"></div>
+    </div>
+    <div class="fg"><label class="fl">Notes / Flags</label><textarea class="fta" id="m-notes"></textarea></div>
+    <div class="mda">
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="segSaveNew()">Save</button>
+    </div>`);
 }
 
 function segSaveNew() {
-const name = document.getElementById(‘m-name’).value.trim();
-if (!name) return;
-STATE.segments.push({
-id: Date.now(), name,
-location: document.getElementById(‘m-loc’).value,
-start: document.getElementById(‘m-start’).value,
-end: document.getElementById(‘m-end’).value,
-days: parseInt(document.getElementById(‘m-days’).value)||0,
-budgetUSD: parseInt(document.getElementById(‘m-budget’).value)||0,
-notes: document.getElementById(‘m-notes’).value,
-});
-save(); closeModal(); toast(‘Segment added’); renderItinerary();
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) return;
+  STATE.segments.push({
+    id: Date.now(), name,
+    location: document.getElementById('m-loc').value,
+    start: document.getElementById('m-start').value,
+    end: document.getElementById('m-end').value,
+    days: parseInt(document.getElementById('m-days').value)||0,
+    budgetUSD: parseInt(document.getElementById('m-budget').value)||0,
+    notes: document.getElementById('m-notes').value,
+  });
+  save(); closeModal(); toast('Segment added'); renderItinerary();
 }
 
 function segEditModal(id) {
-const seg = STATE.segments.find(s => s.id === id);
-if (!seg) return;
-showModal(` <div class="mdtitle">Edit Segment</div> <div class="fg" style="margin-bottom:10px"><label class="fl">Name</label><input class="fi" id="m-name" value="${seg.name}"></div> <div class="fg" style="margin-bottom:10px"><label class="fl">Location</label><input class="fi" id="m-loc" value="${seg.location||''}"></div> <div class="fr"> <div class="fg"><label class="fl">Start</label><input class="fi" id="m-start" value="${seg.start||''}"></div> <div class="fg"><label class="fl">End</label><input class="fi" id="m-end" value="${seg.end||''}"></div> <div class="fg"><label class="fl">Days</label><input class="fi" id="m-days" type="number" value="${seg.days||0}"></div> <div class="fg"><label class="fl">Budget USD</label><input class="fi" id="m-budget" type="number" value="${seg.budgetUSD||0}"></div> </div> <div class="fg"><label class="fl">Notes / Flags</label><textarea class="fta" id="m-notes">${seg.notes||''}</textarea></div> <div class="mda"> <button class="btn bdn bsm" onclick="segDelete(${id})">Delete</button> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="segSaveEdit(${id})">Save</button> </div>`);
+  const seg = STATE.segments.find(s => s.id === id);
+  if (!seg) return;
+  showModal(`
+    <div class="mdtitle">Edit Segment</div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Name</label><input class="fi" id="m-name" value="${seg.name}"></div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Location</label><input class="fi" id="m-loc" value="${seg.location||''}"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Start</label><input class="fi" id="m-start" value="${seg.start||''}"></div>
+      <div class="fg"><label class="fl">End</label><input class="fi" id="m-end" value="${seg.end||''}"></div>
+      <div class="fg"><label class="fl">Days</label><input class="fi" id="m-days" type="number" value="${seg.days||0}"></div>
+      <div class="fg"><label class="fl">Budget USD</label><input class="fi" id="m-budget" type="number" value="${seg.budgetUSD||0}"></div>
+    </div>
+    <div class="fg"><label class="fl">Notes / Flags</label><textarea class="fta" id="m-notes">${seg.notes||''}</textarea></div>
+    <div class="mda">
+      <button class="btn bdn bsm" onclick="segDelete(${id})">Delete</button>
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="segSaveEdit(${id})">Save</button>
+    </div>`);
 }
 
 function segSaveEdit(id) {
-const seg = STATE.segments.find(s => s.id === id);
-if (!seg) return;
-seg.name = document.getElementById(‘m-name’).value;
-seg.location = document.getElementById(‘m-loc’).value;
-seg.start = document.getElementById(‘m-start’).value;
-seg.end = document.getElementById(‘m-end’).value;
-seg.days = parseInt(document.getElementById(‘m-days’).value)||0;
-seg.budgetUSD = parseInt(document.getElementById(‘m-budget’).value)||0;
-seg.notes = document.getElementById(‘m-notes’).value;
-save(); closeModal(); toast(‘Updated’); renderItinerary();
+  const seg = STATE.segments.find(s => s.id === id);
+  if (!seg) return;
+  seg.name = document.getElementById('m-name').value;
+  seg.location = document.getElementById('m-loc').value;
+  seg.start = document.getElementById('m-start').value;
+  seg.end = document.getElementById('m-end').value;
+  seg.days = parseInt(document.getElementById('m-days').value)||0;
+  seg.budgetUSD = parseInt(document.getElementById('m-budget').value)||0;
+  seg.notes = document.getElementById('m-notes').value;
+  save(); closeModal(); toast('Updated'); renderItinerary();
 }
 
 function segDelete(id) {
-STATE.segments = STATE.segments.filter(s => s.id !== id);
-save(); closeModal(); toast(‘Removed’); renderItinerary();
+  STATE.segments = STATE.segments.filter(s => s.id !== id);
+  save(); closeModal(); toast('Removed'); renderItinerary();
 }
 
 // ============================================================
 // BUDGET
 // ============================================================
 function renderBudget() {
-const el = document.getElementById(‘tab-budget’);
-const totAlloc = STATE.budget.categories.reduce((s,c) => s+(+c.allocated||0), 0);
-const totSpent = STATE.budget.categories.reduce((s,c) => s+(+c.spent||0), 0);
-const segTot = STATE.segments.reduce((s,seg) => s+(+seg.budgetUSD||0), 0);
-const headroom = STATE.budget.totalRunway - totAlloc;
-const pct = (sp, al) => !al ? 0 : Math.min(120, Math.round((sp/al)*100));
-el.innerHTML = `<div class="srow"> <div class="sbox"><div class="slbl">Runway</div> <div class="sval" style="cursor:pointer" onclick="editRunway()">$${STATE.budget.totalRunway.toLocaleString()}</div> </div> <div class="sbox"><div class="slbl">Allocated</div><div class="sval" style="color:${headroom<0?'var(--rd)':'var(--tb)'}">${totAlloc.toLocaleString()}</div></div> <div class="sbox"><div class="slbl">Headroom</div><div class="sval" style="color:${headroom<0?'var(--rd)':headroom<2000?'var(--am)':'var(--gn)'}">${headroom.toLocaleString()}</div></div> <div class="sbox"><div class="slbl">Spent</div><div class="sval">$${totSpent.toLocaleString()}</div></div> </div> <div style="background:var(--sf);border:1px solid var(--bd);padding:12px 14px;margin-bottom:18px"> <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--txd);margin-bottom:8px">Runway vs Allocation</div> <div class="pb"><div class="pf" style="width:${Math.min(100,(totAlloc/STATE.budget.totalRunway)*100)}%;background:${headroom<0?'var(--rd)':'var(--tl)'}"></div></div> <div style="font-size:10px;color:var(--txd);margin-top:8px">Segment plan: <span style="color:var(--tx)">$${segTot.toLocaleString()}</span> · Delta vs categories: <span style="color:${Math.abs(segTot-totAlloc)>1000?'var(--am)':'var(--gn)'}">${segTot>totAlloc?'+':''}${(segTot-totAlloc).toLocaleString()}</span></div> </div> <div class="ptitle">Category Breakdown</div> ${STATE.budget.categories.map(cat =>`
-<div style="margin-bottom:14px">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-<span style="font-size:12px;color:var(--txb)">${cat.name}</span>
-<div style="display:flex;gap:10px;align-items:center">
-<span style="font-size:11px;color:var(--txd)">$${(cat.spent||0).toLocaleString()} / $${(cat.allocated||0).toLocaleString()}</span>
-<button class="btn bg2 bsm" onclick="budgetEditModal(${cat.id})">Edit</button>
-</div>
-</div>
-<div class="pb"><div class="pf ${pct(cat.spent,cat.allocated)>100?'ov':pct(cat.spent,cat.allocated)>80?'wn':''}" style="width:${pct(cat.spent,cat.allocated)}%"></div></div>
-</div>`).join('')}`;
+  const el = document.getElementById('tab-budget');
+  const totAlloc = STATE.budget.categories.reduce((s,c) => s+(+c.allocated||0), 0);
+  const totSpent = STATE.budget.categories.reduce((s,c) => s+(+c.spent||0), 0);
+  const segTot = STATE.segments.reduce((s,seg) => s+(+seg.budgetUSD||0), 0);
+  const headroom = STATE.budget.totalRunway - totAlloc;
+  const pct = (sp, al) => !al ? 0 : Math.min(120, Math.round((sp/al)*100));
+  el.innerHTML = `
+    <div class="srow">
+      <div class="sbox"><div class="slbl">Runway</div>
+        <div class="sval" style="cursor:pointer" onclick="editRunway()">$${STATE.budget.totalRunway.toLocaleString()}</div>
+      </div>
+      <div class="sbox"><div class="slbl">Allocated</div><div class="sval" style="color:${headroom<0?'var(--rd)':'var(--tb)'}">${totAlloc.toLocaleString()}</div></div>
+      <div class="sbox"><div class="slbl">Headroom</div><div class="sval" style="color:${headroom<0?'var(--rd)':headroom<2000?'var(--am)':'var(--gn)'}">${headroom.toLocaleString()}</div></div>
+      <div class="sbox"><div class="slbl">Spent</div><div class="sval">$${totSpent.toLocaleString()}</div></div>
+    </div>
+    <div style="background:var(--sf);border:1px solid var(--bd);padding:12px 14px;margin-bottom:18px">
+      <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--txd);margin-bottom:8px">Runway vs Allocation</div>
+      <div class="pb"><div class="pf" style="width:${Math.min(100,(totAlloc/STATE.budget.totalRunway)*100)}%;background:${headroom<0?'var(--rd)':'var(--tl)'}"></div></div>
+      <div style="font-size:10px;color:var(--txd);margin-top:8px">Segment plan: <span style="color:var(--tx)">$${segTot.toLocaleString()}</span> · Delta vs categories: <span style="color:${Math.abs(segTot-totAlloc)>1000?'var(--am)':'var(--gn)'}">${segTot>totAlloc?'+':''}${(segTot-totAlloc).toLocaleString()}</span></div>
+    </div>
+    <div class="ptitle">Category Breakdown</div>
+    ${STATE.budget.categories.map(cat => `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;color:var(--txb)">${cat.name}</span>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span style="font-size:11px;color:var(--txd)">$${(cat.spent||0).toLocaleString()} / $${(cat.allocated||0).toLocaleString()}</span>
+            <button class="btn bg2 bsm" onclick="budgetEditModal(${cat.id})">Edit</button>
+          </div>
+        </div>
+        <div class="pb"><div class="pf ${pct(cat.spent,cat.allocated)>100?'ov':pct(cat.spent,cat.allocated)>80?'wn':''}" style="width:${pct(cat.spent,cat.allocated)}%"></div></div>
+      </div>`).join('')}`;
 }
 
 function editRunway() {
-const val = prompt(‘Set total runway (USD):’, STATE.budget.totalRunway);
-if (val && !isNaN(val)) { STATE.budget.totalRunway = parseInt(val); save(); renderBudget(); toast(‘Runway updated’); }
+  const val = prompt('Set total runway (USD):', STATE.budget.totalRunway);
+  if (val && !isNaN(val)) { STATE.budget.totalRunway = parseInt(val); save(); renderBudget(); toast('Runway updated'); }
 }
 
 function budgetEditModal(id) {
-const cat = STATE.budget.categories.find(c => c.id === id);
-if (!cat) return;
-showModal(` <div class="mdtitle">Edit: ${cat.name}</div> <div class="fr"> <div class="fg"><label class="fl">Allocated (USD)</label><input class="fi" id="m-alloc" type="number" value="${cat.allocated||0}"></div> <div class="fg"><label class="fl">Spent (USD)</label><input class="fi" id="m-spent" type="number" value="${cat.spent||0}"></div> </div> <div class="mda"> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="budgetSave(${id})">Save</button> </div>`);
+  const cat = STATE.budget.categories.find(c => c.id === id);
+  if (!cat) return;
+  showModal(`
+    <div class="mdtitle">Edit: ${cat.name}</div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Allocated (USD)</label><input class="fi" id="m-alloc" type="number" value="${cat.allocated||0}"></div>
+      <div class="fg"><label class="fl">Spent (USD)</label><input class="fi" id="m-spent" type="number" value="${cat.spent||0}"></div>
+    </div>
+    <div class="mda">
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="budgetSave(${id})">Save</button>
+    </div>`);
 }
 
 function budgetSave(id) {
-const cat = STATE.budget.categories.find(c => c.id === id);
-if (!cat) return;
-cat.allocated = parseInt(document.getElementById(‘m-alloc’).value)||0;
-cat.spent = parseInt(document.getElementById(‘m-spent’).value)||0;
-save(); closeModal(); toast(‘Updated’); renderBudget();
+  const cat = STATE.budget.categories.find(c => c.id === id);
+  if (!cat) return;
+  cat.allocated = parseInt(document.getElementById('m-alloc').value)||0;
+  cat.spent = parseInt(document.getElementById('m-spent').value)||0;
+  save(); closeModal(); toast('Updated'); renderBudget();
 }
 
 // ============================================================
 // DECISIONS
 // ============================================================
-const DTYPES = [‘Decision’,‘Open Variable’,‘Strategy Position’];
-const DBADGE = {‘Decision’:‘bt’,‘Open Variable’:‘ba’,‘Strategy Position’:‘br’};
-let decFilter = ‘All’;
+const DTYPES = ['Decision','Open Variable','Strategy Position'];
+const DBADGE = {'Decision':'bt','Open Variable':'ba','Strategy Position':'br'};
+let decFilter = 'All';
 let showSunset = false;
 
 function renderDecisions() {
-const el = document.getElementById(‘tab-decisions’);
-const active = STATE.decisions.filter(d => !d.sunset);
-const sunset = STATE.decisions.filter(d => d.sunset);
-const filtered = decFilter === ‘All’ ? active : active.filter(d => d.type === decFilter);
-el.innerHTML = ` <div class="srow"> <div class="sbox"><div class="slbl">Active</div><div class="sval">${active.length}</div></div> <div class="sbox"><div class="slbl">Open Vars</div><div class="sval" style="color:var(--am)">${active.filter(d=>d.type==='Open Variable').length}</div></div> <div class="sbox"><div class="slbl">Decisions</div><div class="sval" style="color:var(--tb)">${active.filter(d=>d.type==='Decision').length}</div></div> <div class="sbox"><div class="slbl">Strategy</div><div class="sval" style="color:#e74c3c">${active.filter(d=>d.type==='Strategy Position').length}</div></div> </div> <div class="shdr"> <div class="fc">${['All',...DTYPES].map(f=>`<button class="fch ${decFilter===f?'on':''}" onclick="setDecFilter('${f}')">${f}</button>`).join('')}</div> <button class="btn bp bsm" onclick="decAddModal()">+ Add</button> </div> ${filtered.length===0?'<div class="empty">No entries.</div>':''} ${filtered.map(d => `
-<div class="card" style="margin-bottom:8px">
-<div style="display:flex;justify-content:space-between;align-items:flex-start">
-<div style="flex:1;min-width:0">
-<div style="display:flex;gap:7px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
-<span class="badge ${DBADGE[d.type]||'bt'}">${d.type}</span>
-<span class="ctitle">${d.title}</span>
-</div>
-<div class="csub">${d.date}</div>
-${d.reasoning?`<p class="nt" style="margin-top:6px"><span style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--txd)">Reasoning: </span>${d.reasoning}</p>`:’’}
-${d.impact?`<p class="nt" style="margin-top:4px"><span style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--txd)">Impact: </span>${d.impact}</p>`:’’}
-</div>
-<button class="btn bg2 bsm" style="margin-left:8px;flex-shrink:0" onclick="decEditModal(${d.id})">Edit</button>
-</div>
-</div>`).join('')} ${sunset.length>0?`
-<div style="margin-top:14px">
-<button class="btn bg2 bsm" onclick="toggleSunset()">${showSunset?‘▲’:‘▼’} Sunset Log (${sunset.length})</button>
-${showSunset?sunset.map(d=>` <div class="card sunset-item" style="margin-bottom:6px;margin-top:6px"> <span class="ctitle">${d.title}</span> <div class="csub">Sunset ${d.sunsetDate||''} · ${d.sunsetReason||''}</div> </div>`).join(’’):’’}
-</div>`:''}`;
-updateOpenVarCount();
+  const el = document.getElementById('tab-decisions');
+  const active = STATE.decisions.filter(d => !d.sunset);
+  const sunset = STATE.decisions.filter(d => d.sunset);
+  const filtered = decFilter === 'All' ? active : active.filter(d => d.type === decFilter);
+  el.innerHTML = `
+    <div class="srow">
+      <div class="sbox"><div class="slbl">Active</div><div class="sval">${active.length}</div></div>
+      <div class="sbox"><div class="slbl">Open Vars</div><div class="sval" style="color:var(--am)">${active.filter(d=>d.type==='Open Variable').length}</div></div>
+      <div class="sbox"><div class="slbl">Decisions</div><div class="sval" style="color:var(--tb)">${active.filter(d=>d.type==='Decision').length}</div></div>
+      <div class="sbox"><div class="slbl">Strategy</div><div class="sval" style="color:#e74c3c">${active.filter(d=>d.type==='Strategy Position').length}</div></div>
+    </div>
+    <div class="shdr">
+      <div class="fc">${['All',...DTYPES].map(f=>`<button class="fch ${decFilter===f?'on':''}" onclick="setDecFilter('${f}')">${f}</button>`).join('')}</div>
+      <button class="btn bp bsm" onclick="decAddModal()">+ Add</button>
+    </div>
+    ${filtered.length===0?'<div class="empty">No entries.</div>':''}
+    ${filtered.map(d => `
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;gap:7px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
+              <span class="badge ${DBADGE[d.type]||'bt'}">${d.type}</span>
+              <span class="ctitle">${d.title}</span>
+            </div>
+            <div class="csub">${d.date}</div>
+            ${d.reasoning?`<p class="nt" style="margin-top:6px"><span style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--txd)">Reasoning: </span>${d.reasoning}</p>`:''}
+            ${d.impact?`<p class="nt" style="margin-top:4px"><span style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--txd)">Impact: </span>${d.impact}</p>`:''}
+          </div>
+          <button class="btn bg2 bsm" style="margin-left:8px;flex-shrink:0" onclick="decEditModal(${d.id})">Edit</button>
+        </div>
+      </div>`).join('')}
+    ${sunset.length>0?`
+      <div style="margin-top:14px">
+        <button class="btn bg2 bsm" onclick="toggleSunset()">${showSunset?'▲':'▼'} Sunset Log (${sunset.length})</button>
+        ${showSunset?sunset.map(d=>`
+          <div class="card sunset-item" style="margin-bottom:6px;margin-top:6px">
+            <span class="ctitle">${d.title}</span>
+            <div class="csub">Sunset ${d.sunsetDate||''} · ${d.sunsetReason||''}</div>
+          </div>`).join(''):''}
+      </div>`:''}`;
+  updateOpenVarCount();
 }
 
 function setDecFilter(f) { decFilter = f; renderDecisions(); }
 function toggleSunset() { showSunset = !showSunset; renderDecisions(); }
 
 function decAddModal() {
-const today = new Date().toISOString().slice(0,7);
-showModal(` <div class="mdtitle">New Entry</div> <div class="fr"> <div class="fg" style="flex:2"><label class="fl">Title</label><input class="fi" id="m-title" placeholder="e.g. Seaventures over Scuba Junkie"></div> <div class="fg"><label class="fl">Type</label><select class="fi" id="m-type">${DTYPES.map(t=>`<option>${t}</option>`).join('')}</select></div> </div> <div class="fg" style="margin-bottom:10px"><label class="fl">Reasoning</label><textarea class="fta" id="m-reasoning"></textarea></div> <div class="fg"><label class="fl">Downstream Impact</label><textarea class="fta" id="m-impact" style="min-height:44px"></textarea></div> <div class="mda"> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="decSaveNew()">Save</button> </div>`);
+  const today = new Date().toISOString().slice(0,7);
+  showModal(`
+    <div class="mdtitle">New Entry</div>
+    <div class="fr">
+      <div class="fg" style="flex:2"><label class="fl">Title</label><input class="fi" id="m-title" placeholder="e.g. Seaventures over Scuba Junkie"></div>
+      <div class="fg"><label class="fl">Type</label><select class="fi" id="m-type">${DTYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Reasoning</label><textarea class="fta" id="m-reasoning"></textarea></div>
+    <div class="fg"><label class="fl">Downstream Impact</label><textarea class="fta" id="m-impact" style="min-height:44px"></textarea></div>
+    <div class="mda">
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="decSaveNew()">Save</button>
+    </div>`);
 }
 
 function decSaveNew() {
-const title = document.getElementById(‘m-title’).value.trim();
-if (!title) return;
-STATE.decisions.unshift({
-id: Date.now(),
-type: document.getElementById(‘m-type’).value,
-title,
-reasoning: document.getElementById(‘m-reasoning’).value,
-impact: document.getElementById(‘m-impact’).value,
-sunset: false,
-date: new Date().toISOString().slice(0,7),
-});
-save(); closeModal(); toast(‘Added’); renderDecisions();
+  const title = document.getElementById('m-title').value.trim();
+  if (!title) return;
+  STATE.decisions.unshift({
+    id: Date.now(),
+    type: document.getElementById('m-type').value,
+    title,
+    reasoning: document.getElementById('m-reasoning').value,
+    impact: document.getElementById('m-impact').value,
+    sunset: false,
+    date: new Date().toISOString().slice(0,7),
+  });
+  save(); closeModal(); toast('Added'); renderDecisions();
 }
 
 function decEditModal(id) {
-const d = STATE.decisions.find(x => x.id === id);
-if (!d) return;
-showModal(` <div class="mdtitle">Edit Entry</div> <div class="fr"> <div class="fg" style="flex:2"><label class="fl">Title</label><input class="fi" id="m-title" value="${d.title.replace(/"/g,'&quot;')}"></div> <div class="fg"><label class="fl">Type</label><select class="fi" id="m-type">${DTYPES.map(t=>`<option ${t===d.type?‘selected’:’’}>${t}</option>`).join('')}</select></div> </div> <div class="fg" style="margin-bottom:10px"><label class="fl">Reasoning</label><textarea class="fta" id="m-reasoning">${d.reasoning||''}</textarea></div> <div class="fg"><label class="fl">Downstream Impact</label><textarea class="fta" id="m-impact" style="min-height:44px">${d.impact||''}</textarea></div> <div class="mda"> <button class="btn bg2 bsm" onclick="decSunset(${id})">Sunset</button> <button class="btn bdn bsm" onclick="decDelete(${id})">Delete</button> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="decSaveEdit(${id})">Save</button> </div>`);
+  const d = STATE.decisions.find(x => x.id === id);
+  if (!d) return;
+  showModal(`
+    <div class="mdtitle">Edit Entry</div>
+    <div class="fr">
+      <div class="fg" style="flex:2"><label class="fl">Title</label><input class="fi" id="m-title" value="${d.title.replace(/"/g,'&quot;')}"></div>
+      <div class="fg"><label class="fl">Type</label><select class="fi" id="m-type">${DTYPES.map(t=>`<option ${t===d.type?'selected':''}>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Reasoning</label><textarea class="fta" id="m-reasoning">${d.reasoning||''}</textarea></div>
+    <div class="fg"><label class="fl">Downstream Impact</label><textarea class="fta" id="m-impact" style="min-height:44px">${d.impact||''}</textarea></div>
+    <div class="mda">
+      <button class="btn bg2 bsm" onclick="decSunset(${id})">Sunset</button>
+      <button class="btn bdn bsm" onclick="decDelete(${id})">Delete</button>
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="decSaveEdit(${id})">Save</button>
+    </div>`);
 }
 
 function decSaveEdit(id) {
-const d = STATE.decisions.find(x => x.id === id);
-if (!d) return;
-d.title = document.getElementById(‘m-title’).value;
-d.type = document.getElementById(‘m-type’).value;
-d.reasoning = document.getElementById(‘m-reasoning’).value;
-d.impact = document.getElementById(‘m-impact’).value;
-save(); closeModal(); toast(‘Updated’); renderDecisions();
+  const d = STATE.decisions.find(x => x.id === id);
+  if (!d) return;
+  d.title = document.getElementById('m-title').value;
+  d.type = document.getElementById('m-type').value;
+  d.reasoning = document.getElementById('m-reasoning').value;
+  d.impact = document.getElementById('m-impact').value;
+  save(); closeModal(); toast('Updated'); renderDecisions();
 }
 
 function decSunset(id) {
-const reason = prompt(‘Why is this being sunset?’);
-if (!reason) return;
-const d = STATE.decisions.find(x => x.id === id);
-if (d) { d.sunset = true; d.sunsetReason = reason; d.sunsetDate = new Date().toISOString().slice(0,10); }
-save(); closeModal(); toast(‘Sunset’); renderDecisions();
+  const reason = prompt('Why is this being sunset?');
+  if (!reason) return;
+  const d = STATE.decisions.find(x => x.id === id);
+  if (d) { d.sunset = true; d.sunsetReason = reason; d.sunsetDate = new Date().toISOString().slice(0,10); }
+  save(); closeModal(); toast('Sunset'); renderDecisions();
 }
 
 function decDelete(id) {
-STATE.decisions = STATE.decisions.filter(x => x.id !== id);
-save(); closeModal(); toast(‘Deleted’); renderDecisions();
+  STATE.decisions = STATE.decisions.filter(x => x.id !== id);
+  save(); closeModal(); toast('Deleted'); renderDecisions();
 }
 
 // ============================================================
 // CERTS
 // ============================================================
-const CSTATS = [‘Achieved’,‘In Progress’,‘Target’,‘Possible’];
-const SCOL = {‘Achieved’:‘var(–gn)’,‘In Progress’:‘var(–am)’,‘Target’:‘var(–tb)’,‘Possible’:‘var(–txd)’};
+const CSTATS = ['Achieved','In Progress','Target','Possible'];
+const SCOL = {'Achieved':'var(--gn)','In Progress':'var(--am)','Target':'var(--tb)','Possible':'var(--txd)'};
 
 function renderCerts() {
-const el = document.getElementById(‘tab-certs’);
-el.innerHTML = `<div class="srow"> <div class="sbox"><div class="slbl">Total</div><div class="sval">${STATE.certs.length}</div></div> <div class="sbox"><div class="slbl">Achieved</div><div class="sval" style="color:var(--gn)">${STATE.certs.filter(c=>c.status==='Achieved').length}</div></div> <div class="sbox"><div class="slbl">Target</div><div class="sval" style="color:var(--tb)">${STATE.certs.filter(c=>c.status==='Target').length}</div></div> </div> <div class="shdr"><div class="ptitle" style="margin:0">Certification Pathway</div><button class="btn bp bsm" onclick="certAddModal()">+ Add</button></div> ${STATE.certs.map((cert,i) =>`
-<div class="card" style="margin-bottom:8px">
-<div style="display:flex;justify-content:space-between;align-items:flex-start">
-<div style="display:flex;gap:10px">
-<span style="font-size:10px;color:var(--txd);min-width:20px;margin-top:2px">${String(i+1).padStart(2,‘0’)}</span>
-<div>
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-<span class="ctitle">${cert.name}</span>
-<span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:${SCOL[cert.status]||'var(--txd)'}">${cert.status}</span>
-</div>
-<div class="csub">${cert.agency||‘Agency TBD’}${cert.date?` · ${cert.date}`:’’}</div>
-${cert.notes?`<p class="nt">${cert.notes}</p>`:’’}
-</div>
-</div>
-<button class="btn bg2 bsm" onclick="certEditModal(${cert.id})">Edit</button>
-</div>
-</div>`).join('')}`;
+  const el = document.getElementById('tab-certs');
+  el.innerHTML = `
+    <div class="srow">
+      <div class="sbox"><div class="slbl">Total</div><div class="sval">${STATE.certs.length}</div></div>
+      <div class="sbox"><div class="slbl">Achieved</div><div class="sval" style="color:var(--gn)">${STATE.certs.filter(c=>c.status==='Achieved').length}</div></div>
+      <div class="sbox"><div class="slbl">Target</div><div class="sval" style="color:var(--tb)">${STATE.certs.filter(c=>c.status==='Target').length}</div></div>
+    </div>
+    <div class="shdr"><div class="ptitle" style="margin:0">Certification Pathway</div><button class="btn bp bsm" onclick="certAddModal()">+ Add</button></div>
+    ${STATE.certs.map((cert,i) => `
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="display:flex;gap:10px">
+            <span style="font-size:10px;color:var(--txd);min-width:20px;margin-top:2px">${String(i+1).padStart(2,'0')}</span>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                <span class="ctitle">${cert.name}</span>
+                <span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:${SCOL[cert.status]||'var(--txd)'}">${cert.status}</span>
+              </div>
+              <div class="csub">${cert.agency||'Agency TBD'}${cert.date?` · ${cert.date}`:''}</div>
+              ${cert.notes?`<p class="nt">${cert.notes}</p>`:''}
+            </div>
+          </div>
+          <button class="btn bg2 bsm" onclick="certEditModal(${cert.id})">Edit</button>
+        </div>
+      </div>`).join('')}`;
 }
 
 function certAddModal() {
-showModal(` <div class="mdtitle">Add Cert</div> <div class="fr"> <div class="fg" style="flex:2"><label class="fl">Certification</label><input class="fi" id="m-name"></div> <div class="fg"><label class="fl">Agency</label><input class="fi" id="m-agency" placeholder="TDI, PADI..."></div> </div> <div class="fr"> <div class="fg"><label class="fl">Status</label><select class="fi" id="m-status">${CSTATS.map(s=>`<option ${s===‘Target’?‘selected’:’’}>${s}</option>`).join('')}</select></div> <div class="fg"><label class="fl">Date</label><input class="fi" id="m-date" placeholder="June 2026"></div> </div> <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes"></textarea></div> <div class="mda"> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="certSaveNew()">Save</button> </div>`);
+  showModal(`
+    <div class="mdtitle">Add Cert</div>
+    <div class="fr">
+      <div class="fg" style="flex:2"><label class="fl">Certification</label><input class="fi" id="m-name"></div>
+      <div class="fg"><label class="fl">Agency</label><input class="fi" id="m-agency" placeholder="TDI, PADI..."></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Status</label><select class="fi" id="m-status">${CSTATS.map(s=>`<option ${s==='Target'?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="fg"><label class="fl">Date</label><input class="fi" id="m-date" placeholder="June 2026"></div>
+    </div>
+    <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes"></textarea></div>
+    <div class="mda">
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="certSaveNew()">Save</button>
+    </div>`);
 }
 
 function certSaveNew() {
-const name = document.getElementById(‘m-name’).value.trim();
-if (!name) return;
-STATE.certs.push({
-id: Date.now(), name,
-agency: document.getElementById(‘m-agency’).value,
-status: document.getElementById(‘m-status’).value,
-date: document.getElementById(‘m-date’).value,
-notes: document.getElementById(‘m-notes’).value,
-});
-save(); closeModal(); toast(‘Added’); renderCerts();
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) return;
+  STATE.certs.push({
+    id: Date.now(), name,
+    agency: document.getElementById('m-agency').value,
+    status: document.getElementById('m-status').value,
+    date: document.getElementById('m-date').value,
+    notes: document.getElementById('m-notes').value,
+  });
+  save(); closeModal(); toast('Added'); renderCerts();
 }
 
 function certEditModal(id) {
-const cert = STATE.certs.find(c => c.id === id);
-if (!cert) return;
-showModal(` <div class="mdtitle">Edit Cert</div> <div class="fr"> <div class="fg" style="flex:2"><label class="fl">Certification</label><input class="fi" id="m-name" value="${cert.name}"></div> <div class="fg"><label class="fl">Agency</label><input class="fi" id="m-agency" value="${cert.agency||''}"></div> </div> <div class="fr"> <div class="fg"><label class="fl">Status</label><select class="fi" id="m-status">${CSTATS.map(s=>`<option ${s===cert.status?‘selected’:’’}>${s}</option>`).join('')}</select></div> <div class="fg"><label class="fl">Date</label><input class="fi" id="m-date" value="${cert.date||''}"></div> </div> <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes">${cert.notes||''}</textarea></div> <div class="mda"> <button class="btn bdn bsm" onclick="certDelete(${id})">Delete</button> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="certSaveEdit(${id})">Save</button> </div>`);
+  const cert = STATE.certs.find(c => c.id === id);
+  if (!cert) return;
+  showModal(`
+    <div class="mdtitle">Edit Cert</div>
+    <div class="fr">
+      <div class="fg" style="flex:2"><label class="fl">Certification</label><input class="fi" id="m-name" value="${cert.name}"></div>
+      <div class="fg"><label class="fl">Agency</label><input class="fi" id="m-agency" value="${cert.agency||''}"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Status</label><select class="fi" id="m-status">${CSTATS.map(s=>`<option ${s===cert.status?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="fg"><label class="fl">Date</label><input class="fi" id="m-date" value="${cert.date||''}"></div>
+    </div>
+    <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes">${cert.notes||''}</textarea></div>
+    <div class="mda">
+      <button class="btn bdn bsm" onclick="certDelete(${id})">Delete</button>
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="certSaveEdit(${id})">Save</button>
+    </div>`);
 }
 
 function certSaveEdit(id) {
-const cert = STATE.certs.find(c => c.id === id);
-if (!cert) return;
-cert.name = document.getElementById(‘m-name’).value;
-cert.agency = document.getElementById(‘m-agency’).value;
-cert.status = document.getElementById(‘m-status’).value;
-cert.date = document.getElementById(‘m-date’).value;
-cert.notes = document.getElementById(‘m-notes’).value;
-save(); closeModal(); toast(‘Updated’); renderCerts();
+  const cert = STATE.certs.find(c => c.id === id);
+  if (!cert) return;
+  cert.name = document.getElementById('m-name').value;
+  cert.agency = document.getElementById('m-agency').value;
+  cert.status = document.getElementById('m-status').value;
+  cert.date = document.getElementById('m-date').value;
+  cert.notes = document.getElementById('m-notes').value;
+  save(); closeModal(); toast('Updated'); renderCerts();
 }
 
 function certDelete(id) {
-STATE.certs = STATE.certs.filter(c => c.id !== id);
-save(); closeModal(); toast(‘Removed’); renderCerts();
+  STATE.certs = STATE.certs.filter(c => c.id !== id);
+  save(); closeModal(); toast('Removed'); renderCerts();
 }
 
 // ============================================================
 // CONTACTS
 // ============================================================
-const CTYPES = [‘Instructor’,‘Operator’,‘Divemaster’,‘Specialist’,‘Logistics’,‘Other’];
+const CTYPES = ['Instructor','Operator','Divemaster','Specialist','Logistics','Other'];
 
 function renderContacts() {
-const el = document.getElementById(‘tab-contacts’);
-el.innerHTML = `<div class="shdr"><div class="ptitle" style="margin:0">People & Operators</div><button class="btn bp bsm" onclick="contactAddModal()">+ Add</button></div> ${STATE.contacts.length===0?'<div class="empty">No contacts yet.</div>':''} ${STATE.contacts.map(c =>`
-<div class="card" style="margin-bottom:8px">
-<div style="display:flex;justify-content:space-between;align-items:flex-start">
-<div>
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="ctitle">${c.name}</span><span class="tag">${c.type}</span></div>
-${c.location?`<div class="csub">${c.location}</div>`:’’}
-${c.context?`<p class="nt" style="margin-top:6px"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--txd)">Context: </span>${c.context}</p>`:’’}
-${c.recommendation?`<p class="nt" style="margin-top:4px"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--tb)">Known for: </span>${c.recommendation}</p>`:’’}
-${c.contact?`<p class="nt" style="margin-top:4px"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--txd)">Contact: </span>${c.contact}</p>`:’’}
-</div>
-<button class="btn bg2 bsm" onclick="contactEditModal(${c.id})">Edit</button>
-</div>
-</div>`).join('')}`;
+  const el = document.getElementById('tab-contacts');
+  el.innerHTML = `
+    <div class="shdr"><div class="ptitle" style="margin:0">People & Operators</div><button class="btn bp bsm" onclick="contactAddModal()">+ Add</button></div>
+    ${STATE.contacts.length===0?'<div class="empty">No contacts yet.</div>':''}
+    ${STATE.contacts.map(c => `
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="ctitle">${c.name}</span><span class="tag">${c.type}</span></div>
+            ${c.location?`<div class="csub">${c.location}</div>`:''}
+            ${c.context?`<p class="nt" style="margin-top:6px"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--txd)">Context: </span>${c.context}</p>`:''}
+            ${c.recommendation?`<p class="nt" style="margin-top:4px"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--tb)">Known for: </span>${c.recommendation}</p>`:''}
+            ${c.contact?`<p class="nt" style="margin-top:4px"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--txd)">Contact: </span>${c.contact}</p>`:''}
+          </div>
+          <button class="btn bg2 bsm" onclick="contactEditModal(${c.id})">Edit</button>
+        </div>
+      </div>`).join('')}`;
 }
 
 function contactAddModal() {
-showModal(` <div class="mdtitle">Add Contact</div> <div class="fr"> <div class="fg" style="flex:2"><label class="fl">Name</label><input class="fi" id="m-name"></div> <div class="fg"><label class="fl">Type</label><select class="fi" id="m-type">${CTYPES.map(t=>`<option>${t}</option>`).join('')}</select></div> </div> <div class="fg" style="margin-bottom:10px"><label class="fl">Location / Operator</label><input class="fi" id="m-loc" placeholder="Big Blue Tech, Koh Tao"></div> <div class="fg" style="margin-bottom:10px"><label class="fl">Context — who they are</label><textarea class="fta" id="m-context" style="min-height:50px"></textarea></div> <div class="fg" style="margin-bottom:10px"><label class="fl">Known for / Recommendation</label><textarea class="fta" id="m-rec" style="min-height:44px"></textarea></div> <div class="fg"><label class="fl">Contact / WhatsApp</label><input class="fi" id="m-contact"></div> <div class="mda"> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="contactSaveNew()">Save</button> </div>`);
+  showModal(`
+    <div class="mdtitle">Add Contact</div>
+    <div class="fr">
+      <div class="fg" style="flex:2"><label class="fl">Name</label><input class="fi" id="m-name"></div>
+      <div class="fg"><label class="fl">Type</label><select class="fi" id="m-type">${CTYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Location / Operator</label><input class="fi" id="m-loc" placeholder="Big Blue Tech, Koh Tao"></div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Context — who they are</label><textarea class="fta" id="m-context" style="min-height:50px"></textarea></div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Known for / Recommendation</label><textarea class="fta" id="m-rec" style="min-height:44px"></textarea></div>
+    <div class="fg"><label class="fl">Contact / WhatsApp</label><input class="fi" id="m-contact"></div>
+    <div class="mda">
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="contactSaveNew()">Save</button>
+    </div>`);
 }
 
 function contactSaveNew() {
-const name = document.getElementById(‘m-name’).value.trim();
-if (!name) return;
-STATE.contacts.push({
-id: Date.now(), name,
-type: document.getElementById(‘m-type’).value,
-location: document.getElementById(‘m-loc’).value,
-context: document.getElementById(‘m-context’).value,
-recommendation: document.getElementById(‘m-rec’).value,
-contact: document.getElementById(‘m-contact’).value,
-});
-save(); closeModal(); toast(‘Added’); renderContacts();
+  const name = document.getElementById('m-name').value.trim();
+  if (!name) return;
+  STATE.contacts.push({
+    id: Date.now(), name,
+    type: document.getElementById('m-type').value,
+    location: document.getElementById('m-loc').value,
+    context: document.getElementById('m-context').value,
+    recommendation: document.getElementById('m-rec').value,
+    contact: document.getElementById('m-contact').value,
+  });
+  save(); closeModal(); toast('Added'); renderContacts();
 }
 
 function contactEditModal(id) {
-const c = STATE.contacts.find(x => x.id === id);
-if (!c) return;
-showModal(` <div class="mdtitle">Edit Contact</div> <div class="fr"> <div class="fg" style="flex:2"><label class="fl">Name</label><input class="fi" id="m-name" value="${c.name}"></div> <div class="fg"><label class="fl">Type</label><select class="fi" id="m-type">${CTYPES.map(t=>`<option ${t===c.type?‘selected’:’’}>${t}</option>`).join('')}</select></div> </div> <div class="fg" style="margin-bottom:10px"><label class="fl">Location / Operator</label><input class="fi" id="m-loc" value="${c.location||''}"></div> <div class="fg" style="margin-bottom:10px"><label class="fl">Context</label><textarea class="fta" id="m-context" style="min-height:50px">${c.context||''}</textarea></div> <div class="fg" style="margin-bottom:10px"><label class="fl">Known for</label><textarea class="fta" id="m-rec" style="min-height:44px">${c.recommendation||''}</textarea></div> <div class="fg"><label class="fl">Contact / WhatsApp</label><input class="fi" id="m-contact" value="${c.contact||''}"></div> <div class="mda"> <button class="btn bdn bsm" onclick="contactDelete(${id})">Delete</button> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="contactSaveEdit(${id})">Save</button> </div>`);
+  const c = STATE.contacts.find(x => x.id === id);
+  if (!c) return;
+  showModal(`
+    <div class="mdtitle">Edit Contact</div>
+    <div class="fr">
+      <div class="fg" style="flex:2"><label class="fl">Name</label><input class="fi" id="m-name" value="${c.name}"></div>
+      <div class="fg"><label class="fl">Type</label><select class="fi" id="m-type">${CTYPES.map(t=>`<option ${t===c.type?'selected':''}>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Location / Operator</label><input class="fi" id="m-loc" value="${c.location||''}"></div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Context</label><textarea class="fta" id="m-context" style="min-height:50px">${c.context||''}</textarea></div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Known for</label><textarea class="fta" id="m-rec" style="min-height:44px">${c.recommendation||''}</textarea></div>
+    <div class="fg"><label class="fl">Contact / WhatsApp</label><input class="fi" id="m-contact" value="${c.contact||''}"></div>
+    <div class="mda">
+      <button class="btn bdn bsm" onclick="contactDelete(${id})">Delete</button>
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="contactSaveEdit(${id})">Save</button>
+    </div>`);
 }
 
 function contactSaveEdit(id) {
-const c = STATE.contacts.find(x => x.id === id);
-if (!c) return;
-c.name = document.getElementById(‘m-name’).value;
-c.type = document.getElementById(‘m-type’).value;
-c.location = document.getElementById(‘m-loc’).value;
-c.context = document.getElementById(‘m-context’).value;
-c.recommendation = document.getElementById(‘m-rec’).value;
-c.contact = document.getElementById(‘m-contact’).value;
-save(); closeModal(); toast(‘Updated’); renderContacts();
+  const c = STATE.contacts.find(x => x.id === id);
+  if (!c) return;
+  c.name = document.getElementById('m-name').value;
+  c.type = document.getElementById('m-type').value;
+  c.location = document.getElementById('m-loc').value;
+  c.context = document.getElementById('m-context').value;
+  c.recommendation = document.getElementById('m-rec').value;
+  c.contact = document.getElementById('m-contact').value;
+  save(); closeModal(); toast('Updated'); renderContacts();
 }
 
 function contactDelete(id) {
-STATE.contacts = STATE.contacts.filter(x => x.id !== id);
-save(); closeModal(); toast(‘Removed’); renderContacts();
+  STATE.contacts = STATE.contacts.filter(x => x.id !== id);
+  save(); closeModal(); toast('Removed'); renderContacts();
 }
 
 // ============================================================
 // HEALTH
 // ============================================================
-const HCATS = [‘Ear/Equalisation’,‘Incident’,‘Medical’,‘Pattern’,‘Other’];
+const HCATS = ['Ear/Equalisation','Incident','Medical','Pattern','Other'];
 
 function renderHealth() {
-const el = document.getElementById(‘tab-health’);
-el.innerHTML = `<div class="shdr"><div class="ptitle" style="margin:0">Health & Dive Notes</div><button class="btn bp bsm" onclick="healthAddModal()">+ Add</button></div> <div style="font-size:11px;color:var(--txd);margin-bottom:14px;font-family:var(--sa);line-height:1.6;padding:10px 12px;background:var(--sf);border:1px solid var(--bd)"> Dive-relevant health notes — equalisation issues, incidents, patterns. For instructor context and personal tracking. </div> ${STATE.health.length===0?'<div class="empty">No health notes yet.</div>':''} ${STATE.health.map(h =>`
-<div class="card" style="margin-bottom:8px">
-<div style="display:flex;justify-content:space-between;align-items:flex-start">
-<div>
-<div style="display:flex;gap:8px;align-items:center;margin-bottom:3px"><span class="tag">${h.category}</span><span class="ctitle">${h.title}</span></div>
-<div class="csub">${h.date}</div>
-${h.notes?`<p class="nt" style="margin-top:6px">${h.notes}</p>`:’’}
-</div>
-<button class="btn bg2 bsm" onclick="healthEditModal(${h.id})">Edit</button>
-</div>
-</div>`).join('')}`;
+  const el = document.getElementById('tab-health');
+  el.innerHTML = `
+    <div class="shdr"><div class="ptitle" style="margin:0">Health & Dive Notes</div><button class="btn bp bsm" onclick="healthAddModal()">+ Add</button></div>
+    <div style="font-size:11px;color:var(--txd);margin-bottom:14px;font-family:var(--sa);line-height:1.6;padding:10px 12px;background:var(--sf);border:1px solid var(--bd)">
+      Dive-relevant health notes — equalisation issues, incidents, patterns. For instructor context and personal tracking.
+    </div>
+    ${STATE.health.length===0?'<div class="empty">No health notes yet.</div>':''}
+    ${STATE.health.map(h => `
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:3px"><span class="tag">${h.category}</span><span class="ctitle">${h.title}</span></div>
+            <div class="csub">${h.date}</div>
+            ${h.notes?`<p class="nt" style="margin-top:6px">${h.notes}</p>`:''}
+          </div>
+          <button class="btn bg2 bsm" onclick="healthEditModal(${h.id})">Edit</button>
+        </div>
+      </div>`).join('')}`;
 }
 
 function healthAddModal() {
-showModal(` <div class="mdtitle">Add Health Note</div> <div class="fr"> <div class="fg" style="flex:2"><label class="fl">Title</label><input class="fi" id="m-title"></div> <div class="fg"><label class="fl">Category</label><select class="fi" id="m-cat">${HCATS.map(c=>`<option>${c}</option>`).join('')}</select></div> </div> <div class="fg" style="margin-bottom:10px"><label class="fl">Date</label><input class="fi" id="m-date" placeholder="2026-07-15"></div> <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes"></textarea></div> <div class="mda"> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="healthSaveNew()">Save</button> </div>`);
+  showModal(`
+    <div class="mdtitle">Add Health Note</div>
+    <div class="fr">
+      <div class="fg" style="flex:2"><label class="fl">Title</label><input class="fi" id="m-title"></div>
+      <div class="fg"><label class="fl">Category</label><select class="fi" id="m-cat">${HCATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Date</label><input class="fi" id="m-date" placeholder="2026-07-15"></div>
+    <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes"></textarea></div>
+    <div class="mda">
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="healthSaveNew()">Save</button>
+    </div>`);
 }
 
 function healthSaveNew() {
-const title = document.getElementById(‘m-title’).value.trim();
-if (!title) return;
-STATE.health.unshift({
-id: Date.now(), title,
-category: document.getElementById(‘m-cat’).value,
-date: document.getElementById(‘m-date’).value || new Date().toISOString().slice(0,10),
-notes: document.getElementById(‘m-notes’).value,
-});
-save(); closeModal(); toast(‘Added’); renderHealth();
+  const title = document.getElementById('m-title').value.trim();
+  if (!title) return;
+  STATE.health.unshift({
+    id: Date.now(), title,
+    category: document.getElementById('m-cat').value,
+    date: document.getElementById('m-date').value || new Date().toISOString().slice(0,10),
+    notes: document.getElementById('m-notes').value,
+  });
+  save(); closeModal(); toast('Added'); renderHealth();
 }
 
 function healthEditModal(id) {
-const h = STATE.health.find(x => x.id === id);
-if (!h) return;
-showModal(` <div class="mdtitle">Edit Health Note</div> <div class="fr"> <div class="fg" style="flex:2"><label class="fl">Title</label><input class="fi" id="m-title" value="${h.title}"></div> <div class="fg"><label class="fl">Category</label><select class="fi" id="m-cat">${HCATS.map(c=>`<option ${c===h.category?‘selected’:’’}>${c}</option>`).join('')}</select></div> </div> <div class="fg" style="margin-bottom:10px"><label class="fl">Date</label><input class="fi" id="m-date" value="${h.date||''}"></div> <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes">${h.notes||''}</textarea></div> <div class="mda"> <button class="btn bdn bsm" onclick="healthDelete(${id})">Delete</button> <button class="btn bg2" onclick="closeModal()">Cancel</button> <button class="btn bp" onclick="healthSaveEdit(${id})">Save</button> </div>`);
+  const h = STATE.health.find(x => x.id === id);
+  if (!h) return;
+  showModal(`
+    <div class="mdtitle">Edit Health Note</div>
+    <div class="fr">
+      <div class="fg" style="flex:2"><label class="fl">Title</label><input class="fi" id="m-title" value="${h.title}"></div>
+      <div class="fg"><label class="fl">Category</label><select class="fi" id="m-cat">${HCATS.map(c=>`<option ${c===h.category?'selected':''}>${c}</option>`).join('')}</select></div>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">Date</label><input class="fi" id="m-date" value="${h.date||''}"></div>
+    <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="m-notes">${h.notes||''}</textarea></div>
+    <div class="mda">
+      <button class="btn bdn bsm" onclick="healthDelete(${id})">Delete</button>
+      <button class="btn bg2" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="healthSaveEdit(${id})">Save</button>
+    </div>`);
 }
 
 function healthSaveEdit(id) {
-const h = STATE.health.find(x => x.id === id);
-if (!h) return;
-h.title = document.getElementById(‘m-title’).value;
-h.category = document.getElementById(‘m-cat’).value;
-h.date = document.getElementById(‘m-date’).value;
-h.notes = document.getElementById(‘m-notes’).value;
-save(); closeModal(); toast(‘Updated’); renderHealth();
+  const h = STATE.health.find(x => x.id === id);
+  if (!h) return;
+  h.title = document.getElementById('m-title').value;
+  h.category = document.getElementById('m-cat').value;
+  h.date = document.getElementById('m-date').value;
+  h.notes = document.getElementById('m-notes').value;
+  save(); closeModal(); toast('Updated'); renderHealth();
 }
 
 function healthDelete(id) {
-STATE.health = STATE.health.filter(x => x.id !== id);
-save(); closeModal(); toast(‘Removed’); renderHealth();
+  STATE.health = STATE.health.filter(x => x.id !== id);
+  save(); closeModal(); toast('Removed'); renderHealth();
 }
 
 // ============================================================
@@ -846,252 +1062,249 @@ let isRecording = false;
 let reasoningHistory = [];
 
 function buildContext() {
-const totAlloc = STATE.budget.categories.reduce((s,c) => s+(+c.allocated||0), 0);
-const segTot = STATE.segments.reduce((s,seg) => s+(+seg.budgetUSD||0), 0);
-const headroom = STATE.budget.totalRunway - totAlloc;
-return `You are the reasoning engine embedded in Ben Adams’s Trip OS — his single source of truth for a 15-16 month SE Asia technical diving trip departing late May 2026.
+  const totAlloc = STATE.budget.categories.reduce((s,c) => s+(+c.allocated||0), 0);
+  const segTot = STATE.segments.reduce((s,seg) => s+(+seg.budgetUSD||0), 0);
+  const headroom = STATE.budget.totalRunway - totAlloc;
+  return `You are the reasoning engine embedded in Ben Adams's Trip OS — his single source of truth for a 15-16 month SE Asia technical diving trip departing late May 2026.
 
 You have full read access to all his current data. Reason carefully and directly across all domains. Ben is direct, dislikes hedged advice, wants action-first responses. Challenge his assumptions where warranted. Flag conflicts and risks explicitly.
 
 CURRENT DATE: April 2026 | DEPARTURE: Late May 2026 | ROUTE: Manhattan → Bangkok → Field
 
 === GEAR (${STATE.gear.length} items) ===
-${STATE.gear.map(g=>`• ${g.name} [${g.category}]${g.serial?` — ${g.serial}`:''}${g.dives?` — ${g.dives} dives`:''}${g.lastService?` — serviced ${g.lastService}`:''}${g.notes?` | ${g.notes}`:''}`).join(’\n’)}
+${STATE.gear.map(g=>`• ${g.name} [${g.category}]${g.serial?` — ${g.serial}`:''}${g.dives?` — ${g.dives} dives`:''}${g.lastService?` — serviced ${g.lastService}`:''}${g.notes?` | ${g.notes}`:''}`).join('\n')}
 
 === ITINERARY (${STATE.segments.length} segments, ${STATE.segments.reduce((s,seg)=>s+(+seg.days||0),0)} days) ===
-${STATE.segments.map((seg,i)=>`${i+1}. ${seg.name} | ${seg.location} | ${seg.start}–${seg.end} | ${seg.days}d | $${(+seg.budgetUSD||0).toLocaleString()}${seg.notes?'\n   FLAGS: '+seg.notes:''}`).join(’\n’)}
+${STATE.segments.map((seg,i)=>`${i+1}. ${seg.name} | ${seg.location} | ${seg.start}–${seg.end} | ${seg.days}d | $${(+seg.budgetUSD||0).toLocaleString()}${seg.notes?'\n   FLAGS: '+seg.notes:''}`).join('\n')}
 
 === BUDGET ===
 Runway: $${STATE.budget.totalRunway.toLocaleString()} | Allocated: $${totAlloc.toLocaleString()} | Headroom: $${headroom.toLocaleString()}
-Segment total: $${segTot.toLocaleString()} | Delta vs categories: ${segTot>totAlloc?’+’:’’}${(segTot-totAlloc).toLocaleString()}
-${STATE.budget.categories.map(c=>`• ${c.name}: $${c.allocated.toLocaleString()} allocated / $${c.spent.toLocaleString()} spent`).join(’\n’)}
+Segment total: $${segTot.toLocaleString()} | Delta vs categories: ${segTot>totAlloc?'+':''}${(segTot-totAlloc).toLocaleString()}
+${STATE.budget.categories.map(c=>`• ${c.name}: $${c.allocated.toLocaleString()} allocated / $${c.spent.toLocaleString()} spent`).join('\n')}
 
 === CERTIFICATIONS ===
-${STATE.certs.map(c=>`• ${c.name} [${c.status}] ${c.agency||''}${c.date?` — ${c.date}`:''}${c.notes?` | ${c.notes}`:''}`).join(’\n’)}
+${STATE.certs.map(c=>`• ${c.name} [${c.status}] ${c.agency||''}${c.date?` — ${c.date}`:''}${c.notes?` | ${c.notes}`:''}`).join('\n')}
 
 === OPEN VARIABLES ===
-${STATE.decisions.filter(d=>!d.sunset&&d.type===‘Open Variable’).map(d=>`• ${d.title}: ${d.reasoning}${d.impact?'\n  Impact: '+d.impact:''}`).join(’\n’)||‘None’}
+${STATE.decisions.filter(d=>!d.sunset&&d.type==='Open Variable').map(d=>`• ${d.title}: ${d.reasoning}${d.impact?'\n  Impact: '+d.impact:''}`).join('\n')||'None'}
 
 === DECISIONS MADE ===
-${STATE.decisions.filter(d=>!d.sunset&&d.type===‘Decision’).map(d=>`• ${d.title}: ${d.reasoning}`).join(’\n’)||‘None’}
+${STATE.decisions.filter(d=>!d.sunset&&d.type==='Decision').map(d=>`• ${d.title}: ${d.reasoning}`).join('\n')||'None'}
 
 === STRATEGY POSITIONS ===
-${STATE.decisions.filter(d=>!d.sunset&&d.type===‘Strategy Position’).map(d=>`• ${d.title}: ${d.reasoning}`).join(’\n’)||‘None’}
+${STATE.decisions.filter(d=>!d.sunset&&d.type==='Strategy Position').map(d=>`• ${d.title}: ${d.reasoning}`).join('\n')||'None'}
 
 === CONTACTS ===
-${STATE.contacts.map(c=>`• ${c.name} [${c.type}] ${c.location||''}${c.recommendation?` — ${c.recommendation}`:''}`).join(’\n’)||‘None’}
+${STATE.contacts.map(c=>`• ${c.name} [${c.type}] ${c.location||''}${c.recommendation?` — ${c.recommendation}`:''}`).join('\n')||'None'}
 
 === HEALTH NOTES ===
-${STATE.health.map(h=>`• ${h.date} [${h.category}] ${h.title}: ${h.notes}`).join(’\n’)||‘None’}`;
+${STATE.health.map(h=>`• ${h.date} [${h.category}] ${h.title}: ${h.notes}`).join('\n')||'None'}`;
 }
 
 function renderReasoning() {
-const el = document.getElementById(‘tab-reasoning’);
-const apiKey = localStorage.getItem(‘openai-whisper-key’) || ‘’;
-const anthropicKey = localStorage.getItem(‘anthropic-key’) || ‘’;
-el.innerHTML = `
-<div class="srow">
-<div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">Model</div><div class="sval" style="color:#9b77d4;font-size:13px">claude-opus-4-7</div></div>
-<div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">Voice</div><div class="sval" style="color:${apiKey?'var(--gn)':'var(--am)');font-size:13px">${apiKey?‘Whisper ✓’:‘No key’}</div></div>
-<div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">History</div><div class="sval" style="color:#9b77d4">${reasoningHistory.length}</div></div>
-</div>
+  const el = document.getElementById('tab-reasoning');
+  const apiKey = localStorage.getItem('openai-whisper-key') || '';
+  const anthropicKey = localStorage.getItem('anthropic-key') || '';
+  el.innerHTML = `
+    <div class="srow">
+      <div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">Model</div><div class="sval" style="color:#9b77d4;font-size:13px">claude-opus-4-7</div></div>
+      <div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">Voice</div><div class="sval" style="color:${apiKey?'var(--gn)':'var(--am)');font-size:13px">${apiKey?'Whisper ✓':'No key'}</div></div>
+      <div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">History</div><div class="sval" style="color:#9b77d4">${reasoningHistory.length}</div></div>
+    </div>
 
-```
-<!-- API KEYS -->
-<div style="background:#0e0a1a;border:1px solid #3a2060;padding:10px 14px;margin-bottom:10px">
-  <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#5a3a8a;margin-bottom:8px">API Keys</div>
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-    <span style="font-size:10px;color:#9b77d4;min-width:120px">Anthropic (Opus 4.7):</span>
-    ${anthropicKey
-      ? `<span style="font-size:11px;color:var(--gn)">● sk-...${anthropicKey.slice(-6)}</span><button class="btn bg2 bsm" onclick="removeKey('anthropic-key')">Remove</button>`
-      : `<span style="font-size:11px;color:var(--am)">Not set</span><button class="btn bsm" style="color:#9b77d4;border-color:#5a3a8a" onclick="addKeyPrompt('anthropic-key','Anthropic API key (sk-ant-...)')">+ Add</button>`}
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <span style="font-size:10px;color:#9b77d4;min-width:120px">OpenAI (Whisper):</span>
-    ${apiKey
-      ? `<span style="font-size:11px;color:var(--gn)">● sk-...${apiKey.slice(-6)}</span><button class="btn bg2 bsm" onclick="removeKey('openai-whisper-key')">Remove</button>`
-      : `<span style="font-size:11px;color:var(--am)">Not set</span><button class="btn bsm" style="color:#9b77d4;border-color:#5a3a8a" onclick="addKeyPrompt('openai-whisper-key','OpenAI API key (sk-proj-...)')">+ Add</button>`}
-  </div>
-</div>
+    <!-- API KEYS -->
+    <div style="background:#0e0a1a;border:1px solid #3a2060;padding:10px 14px;margin-bottom:10px">
+      <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#5a3a8a;margin-bottom:8px">API Keys</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="font-size:10px;color:#9b77d4;min-width:120px">Anthropic (Opus 4.7):</span>
+        ${anthropicKey
+          ? `<span style="font-size:11px;color:var(--gn)">● sk-...${anthropicKey.slice(-6)}</span><button class="btn bg2 bsm" onclick="removeKey('anthropic-key')">Remove</button>`
+          : `<span style="font-size:11px;color:var(--am)">Not set</span><button class="btn bsm" style="color:#9b77d4;border-color:#5a3a8a" onclick="addKeyPrompt('anthropic-key','Anthropic API key (sk-ant-...)')">+ Add</button>`}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:10px;color:#9b77d4;min-width:120px">OpenAI (Whisper):</span>
+        ${apiKey
+          ? `<span style="font-size:11px;color:var(--gn)">● sk-...${apiKey.slice(-6)}</span><button class="btn bg2 bsm" onclick="removeKey('openai-whisper-key')">Remove</button>`
+          : `<span style="font-size:11px;color:var(--am)">Not set</span><button class="btn bsm" style="color:#9b77d4;border-color:#5a3a8a" onclick="addKeyPrompt('openai-whisper-key','OpenAI API key (sk-proj-...)')">+ Add</button>`}
+      </div>
+    </div>
 
-<div style="font-size:11px;color:var(--txd);margin-bottom:14px;font-family:var(--sa);line-height:1.6;padding:10px 12px;background:#0e0a1a;border:1px solid #3a2060">
-  ${apiKey ? '🎤 Tap mic to record. Tap again to stop — Whisper transcribes automatically. Review text then tap Send.' : 'Add your OpenAI key above to enable voice input.'}
-  ${!anthropicKey ? ' Add your Anthropic key to enable reasoning.' : ''}
-</div>
+    <div style="font-size:11px;color:var(--txd);margin-bottom:14px;font-family:var(--sa);line-height:1.6;padding:10px 12px;background:#0e0a1a;border:1px solid #3a2060">
+      ${apiKey ? '🎤 Tap mic to record. Tap again to stop — Whisper transcribes automatically. Review text then tap Send.' : 'Add your OpenAI key above to enable voice input.'}
+      ${!anthropicKey ? ' Add your Anthropic key to enable reasoning.' : ''}
+    </div>
 
-<div class="rp">
-  <div class="rh" id="rh">
-    <span id="rDot" style="width:8px;height:8px;border-radius:50%;background:#9b77d4;display:inline-block;transition:background .3s"></span>
-    <span class="rl" id="rLabel">Reasoning Engine</span>
-    <span class="rm">claude-opus-4-7 · whisper-1</span>
-  </div>
-  <div class="riw">
-    <textarea class="ri" id="reasoningInput" placeholder="${apiKey?'Tap 🎤 to speak, or type your question here...':'Type your question here...\n\n&quot;Is my Sipadan timing defensible given my cert progression?&quot;\n&quot;Where are the budget risks in my current plan?&quot;'}"></textarea>
-    <button class="mic" id="micBtn" onclick="toggleRecording()" ${!apiKey?'disabled title="Add OpenAI key to enable voice"':''}>🎤</button>
-    <button class="rs" id="sendBtn" onclick="submitReasoning()">Send</button>
-  </div>
-  <div id="rStatus" style="display:none" class="rt"></div>
-  <div id="rOutput" style="display:none" class="ro"></div>
-</div>
+    <div class="rp">
+      <div class="rh" id="rh">
+        <span id="rDot" style="width:8px;height:8px;border-radius:50%;background:#9b77d4;display:inline-block;transition:background .3s"></span>
+        <span class="rl" id="rLabel">Reasoning Engine</span>
+        <span class="rm">claude-opus-4-7 · whisper-1</span>
+      </div>
+      <div class="riw">
+        <textarea class="ri" id="reasoningInput" placeholder="${apiKey?'Tap 🎤 to speak, or type your question here...':'Type your question here...\n\n&quot;Is my Sipadan timing defensible given my cert progression?&quot;\n&quot;Where are the budget risks in my current plan?&quot;'}"></textarea>
+        <button class="mic" id="micBtn" onclick="toggleRecording()" ${!apiKey?'disabled title="Add OpenAI key to enable voice"':''}>🎤</button>
+        <button class="rs" id="sendBtn" onclick="submitReasoning()">Send</button>
+      </div>
+      <div id="rStatus" style="display:none" class="rt"></div>
+      <div id="rOutput" style="display:none" class="ro"></div>
+    </div>
 
-${reasoningHistory.length > 0 ? `
-  <div class="ptitle">Query History</div>
-  <div style="background:var(--sf);border:1px solid var(--bd)">
-    ${reasoningHistory.map((h,i) => `
-      <div class="rhi" onclick="showHistoryItem(${i})">
-        <div class="rhiq">${h.q.length>90?h.q.slice(0,90)+'…':h.q}</div>
-        <div class="rhim">${h.time}</div>
-      </div>`).join('')}
-  </div>` : ''}`;
-```
-
+    ${reasoningHistory.length > 0 ? `
+      <div class="ptitle">Query History</div>
+      <div style="background:var(--sf);border:1px solid var(--bd)">
+        ${reasoningHistory.map((h,i) => `
+          <div class="rhi" onclick="showHistoryItem(${i})">
+            <div class="rhiq">${h.q.length>90?h.q.slice(0,90)+'…':h.q}</div>
+            <div class="rhim">${h.time}</div>
+          </div>`).join('')}
+      </div>` : ''}`;
 }
 
 function addKeyPrompt(storageKey, label) {
-const val = prompt(`Paste your ${label}:`);
-if (val && val.startsWith(‘sk-’)) {
-localStorage.setItem(storageKey, val.trim());
-toast(‘Key saved’);
-renderReasoning();
-} else if (val) {
-alert(‘That doesn't look like a valid key. Keys start with sk-’);
-}
+  const val = prompt(`Paste your ${label}:`);
+  if (val && val.startsWith('sk-')) {
+    localStorage.setItem(storageKey, val.trim());
+    toast('Key saved');
+    renderReasoning();
+  } else if (val) {
+    alert('That doesn\'t look like a valid key. Keys start with sk-');
+  }
 }
 
 function removeKey(storageKey) {
-localStorage.removeItem(storageKey);
-toast(‘Key removed’);
-renderReasoning();
+  localStorage.removeItem(storageKey);
+  toast('Key removed');
+  renderReasoning();
 }
 
 async function toggleRecording() {
-if (isRecording) {
-stopRecording();
-} else {
-await startRecording();
-}
+  if (isRecording) {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
 }
 
 async function startRecording() {
-try {
-const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-const mimeType = MediaRecorder.isTypeSupported(‘audio/webm’) ? ‘audio/webm’ : ‘audio/mp4’;
-mediaRecorder = new MediaRecorder(stream, { mimeType });
-audioChunks = [];
-mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-mediaRecorder.onstop = async () => {
-stream.getTracks().forEach(t => t.stop());
-const blob = new Blob(audioChunks, { type: mimeType });
-await transcribeAudio(blob, mimeType);
-};
-mediaRecorder.start();
-isRecording = true;
-const btn = document.getElementById(‘micBtn’);
-if (btn) { btn.textContent = ‘⏹’; btn.classList.add(‘on’); }
-const dot = document.getElementById(‘rDot’);
-const lbl = document.getElementById(‘rLabel’);
-if (dot) dot.style.background = ‘#ff6060’;
-if (lbl) lbl.textContent = ‘● Recording — tap ⏹ to stop’;
-} catch(e) {
-alert(‘Microphone access denied. Please allow microphone access for this page in your browser settings.’);
-}
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+    mediaRecorder = new MediaRecorder(stream, { mimeType });
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(audioChunks, { type: mimeType });
+      await transcribeAudio(blob, mimeType);
+    };
+    mediaRecorder.start();
+    isRecording = true;
+    const btn = document.getElementById('micBtn');
+    if (btn) { btn.textContent = '⏹'; btn.classList.add('on'); }
+    const dot = document.getElementById('rDot');
+    const lbl = document.getElementById('rLabel');
+    if (dot) dot.style.background = '#ff6060';
+    if (lbl) lbl.textContent = '● Recording — tap ⏹ to stop';
+  } catch(e) {
+    alert('Microphone access denied. Please allow microphone access for this page in your browser settings.');
+  }
 }
 
 function stopRecording() {
-if (mediaRecorder && mediaRecorder.state !== ‘inactive’) {
-mediaRecorder.stop();
-}
-isRecording = false;
-const btn = document.getElementById(‘micBtn’);
-if (btn) { btn.textContent = ‘⏳’; btn.classList.remove(‘on’); btn.disabled = true; }
-const dot = document.getElementById(‘rDot’);
-const lbl = document.getElementById(‘rLabel’);
-if (dot) dot.style.background = ‘var(–am)’;
-if (lbl) lbl.textContent = ‘Transcribing via Whisper…’;
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  isRecording = false;
+  const btn = document.getElementById('micBtn');
+  if (btn) { btn.textContent = '⏳'; btn.classList.remove('on'); btn.disabled = true; }
+  const dot = document.getElementById('rDot');
+  const lbl = document.getElementById('rLabel');
+  if (dot) dot.style.background = 'var(--am)';
+  if (lbl) lbl.textContent = 'Transcribing via Whisper...';
 }
 
 async function transcribeAudio(blob, mimeType) {
-const apiKey = localStorage.getItem(‘openai-whisper-key’);
-if (!apiKey) { alert(‘No OpenAI key set.’); return; }
-try {
-const ext = mimeType.includes(‘mp4’) ? ‘mp4’ : ‘webm’;
-const fd = new FormData();
-fd.append(‘file’, new File([blob], `audio.${ext}`, { type: mimeType }));
-fd.append(‘model’, ‘whisper-1’);
-fd.append(‘language’, ‘en’);
-const res = await fetch(‘https://api.openai.com/v1/audio/transcriptions’, {
-method: ‘POST’,
-headers: { ‘Authorization’: `Bearer ${apiKey}` },
-body: fd
-});
-const data = await res.json();
-if (data.text) {
-const input = document.getElementById(‘reasoningInput’);
-if (input) input.value = (input.value ? input.value + ’ ’ : ‘’) + data.text;
-toast(‘Transcribed ✓’);
-} else {
-alert(‘Transcription failed. Check your OpenAI key.’);
-}
-} catch(e) {
-alert(’Whisper error: ’ + e.message);
-}
-const btn = document.getElementById(‘micBtn’);
-if (btn) { btn.textContent = ‘🎤’; btn.disabled = false; }
-const dot = document.getElementById(‘rDot’);
-const lbl = document.getElementById(‘rLabel’);
-if (dot) dot.style.background = ‘#9b77d4’;
-if (lbl) lbl.textContent = ‘Reasoning Engine’;
+  const apiKey = localStorage.getItem('openai-whisper-key');
+  if (!apiKey) { alert('No OpenAI key set.'); return; }
+  try {
+    const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+    const fd = new FormData();
+    fd.append('file', new File([blob], `audio.${ext}`, { type: mimeType }));
+    fd.append('model', 'whisper-1');
+    fd.append('language', 'en');
+    const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}` },
+      body: fd
+    });
+    const data = await res.json();
+    if (data.text) {
+      const input = document.getElementById('reasoningInput');
+      if (input) input.value = (input.value ? input.value + ' ' : '') + data.text;
+      toast('Transcribed ✓');
+    } else {
+      alert('Transcription failed. Check your OpenAI key.');
+    }
+  } catch(e) {
+    alert('Whisper error: ' + e.message);
+  }
+  const btn = document.getElementById('micBtn');
+  if (btn) { btn.textContent = '🎤'; btn.disabled = false; }
+  const dot = document.getElementById('rDot');
+  const lbl = document.getElementById('rLabel');
+  if (dot) dot.style.background = '#9b77d4';
+  if (lbl) lbl.textContent = 'Reasoning Engine';
 }
 
 async function submitReasoning() {
-const input = document.getElementById(‘reasoningInput’);
-const q = input ? input.value.trim() : ‘’;
-if (!q) return;
-const anthropicKey = localStorage.getItem(‘anthropic-key’);
-if (!anthropicKey) { alert(‘Add your Anthropic API key in the key section above.’); return; }
+  const input = document.getElementById('reasoningInput');
+  const q = input ? input.value.trim() : '';
+  if (!q) return;
+  const anthropicKey = localStorage.getItem('anthropic-key');
+  if (!anthropicKey) { alert('Add your Anthropic API key in the key section above.'); return; }
 
-const sendBtn = document.getElementById(‘sendBtn’);
-const status = document.getElementById(‘rStatus’);
-const output = document.getElementById(‘rOutput’);
-if (sendBtn) sendBtn.disabled = true;
-if (status) { status.textContent = ‘● OPUS 4.7 REASONING…’; status.style.display = ‘block’; }
-if (output) output.style.display = ‘none’;
-if (input) input.value = ‘’;
+  const sendBtn = document.getElementById('sendBtn');
+  const status = document.getElementById('rStatus');
+  const output = document.getElementById('rOutput');
+  if (sendBtn) sendBtn.disabled = true;
+  if (status) { status.textContent = '● OPUS 4.7 REASONING...'; status.style.display = 'block'; }
+  if (output) output.style.display = 'none';
+  if (input) input.value = '';
 
-try {
-const res = await fetch(‘https://api.anthropic.com/v1/messages’, {
-method: ‘POST’,
-headers: {
-‘Content-Type’: ‘application/json’,
-‘x-api-key’: anthropicKey,
-‘anthropic-version’: ‘2023-06-01’,
-},
-body: JSON.stringify({
-model: ‘claude-opus-4-7’,
-max_tokens: 1024,
-system: buildContext(),
-messages: [{ role: ‘user’, content: q }]
-})
-});
-const data = await res.json();
-const text = data.content?.filter(b => b.type === ‘text’).map(b => b.text).join(’’) || JSON.stringify(data);
-if (output) { output.textContent = text; output.style.display = ‘block’; }
-reasoningHistory.unshift({ q, a: text, time: new Date().toLocaleTimeString() });
-if (reasoningHistory.length > 10) reasoningHistory.pop();
-} catch(e) {
-if (output) { output.textContent = ’Error: ’ + e.message; output.style.display = ‘block’; }
-}
-if (status) status.style.display = ‘none’;
-if (sendBtn) sendBtn.disabled = false;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-7',
+        max_tokens: 1024,
+        system: buildContext(),
+        messages: [{ role: 'user', content: q }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || JSON.stringify(data);
+    if (output) { output.textContent = text; output.style.display = 'block'; }
+    reasoningHistory.unshift({ q, a: text, time: new Date().toLocaleTimeString() });
+    if (reasoningHistory.length > 10) reasoningHistory.pop();
+  } catch(e) {
+    if (output) { output.textContent = 'Error: ' + e.message; output.style.display = 'block'; }
+  }
+  if (status) status.style.display = 'none';
+  if (sendBtn) sendBtn.disabled = false;
 }
 
 function showHistoryItem(i) {
-const h = reasoningHistory[i];
-if (!h) return;
-const input = document.getElementById(‘reasoningInput’);
-const output = document.getElementById(‘rOutput’);
-if (input) input.value = h.q;
-if (output) { output.textContent = h.a; output.style.display = ‘block’; }
+  const h = reasoningHistory[i];
+  if (!h) return;
+  const input = document.getElementById('reasoningInput');
+  const output = document.getElementById('rOutput');
+  if (input) input.value = h.q;
+  if (output) { output.textContent = h.a; output.style.display = 'block'; }
 }
 
 // ============================================================
@@ -1099,6 +1312,5 @@ if (output) { output.textContent = h.a; output.style.display = ‘block’; }
 // ============================================================
 renderDecisions();
 </script>
-
 </body>
 </html>
