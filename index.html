@@ -1108,7 +1108,7 @@ function renderReasoning() {
   el.innerHTML = `
     <div class="srow">
       <div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">Model</div><div class="sval" style="color:#9b77d4;font-size:13px">claude-opus-4-7</div></div>
-      <div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">Voice</div><div class="sval" style="color:${apiKey?'var(--gn)':'var(--am)');font-size:13px">${apiKey?'Whisper ✓':'No key'}</div></div>
+      <div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">Voice</div><div class="sval" style="color:${apiKey?'var(--gn)':'var(--am)'};font-size:13px">${apiKey?'Whisper ✓':'No key'}</div></div>
       <div class="sbox" style="border-color:#3a2060;background:#0e0a1a"><div class="slbl" style="color:#5a3a8a">History</div><div class="sval" style="color:#9b77d4">${reasoningHistory.length}</div></div>
     </div>
 
