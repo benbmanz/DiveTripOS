@@ -1261,7 +1261,7 @@ async function submitReasoning() {
   if (input) input.value = '';
 
   try {
-    const res = await fetch('https://dive-trip-o-sproxy.vercel.app/api/claude', {
+    const res = await fetch('https://claude-proxy.ben-bma.workers.dev/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
